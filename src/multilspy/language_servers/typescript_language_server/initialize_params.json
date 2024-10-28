@@ -73,7 +73,8 @@
                 }
             },
             "codeLens": {
-                "refreshSupport": true
+                "refreshSupport": true,
+                "dynamicRegistration": true
             },
             "executeCommand": {
                 "dynamicRegistration": true
