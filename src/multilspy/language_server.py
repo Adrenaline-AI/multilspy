@@ -721,14 +721,24 @@ class SyncLanguageServer:
         :return: None
         """
         self.loop = asyncio.new_event_loop()
-        loop_thread = threading.Thread(target=self.loop.run_forever, daemon=True)
-        loop_thread.start()
+        self.loop_thread = threading.Thread(target=self.loop.run_forever, daemon=True)
+        self.loop_thread.start()
         ctx = self.language_server.start_server()
         asyncio.run_coroutine_threadsafe(ctx.__aenter__(), loop=self.loop).result()
-        yield self
-        asyncio.run_coroutine_threadsafe(ctx.__aexit__(None, None, None), loop=self.loop).result()
-        self.loop.call_soon_threadsafe(self.loop.stop)
-        loop_thread.join()
+        try:
+            yield self
+        finally:
+            self._shutdown_server(ctx)
+
+    def _shutdown_server(self, ctx):
+        """
+        Helper method to shutdown the server and clean up resources.
+        """
+        # NOTE: Temporary workaround but it seems to work
+        try:
+            self.loop.call_soon_threadsafe(self.loop.stop)
+        except Exception as e:
+            print(f"Error during server shutdown: {e}")
 
     def request_definition(self, file_path: str, line: int, column: int) -> List[multilspy_types.Location]:
         """
